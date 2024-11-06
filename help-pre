@@ -1,0 +1,7 @@
+#!/bin/bash
+
+touch /usr/bin/build-help
+
+wget -O - "https://raw.githubusercontent.com/nogebeat/helpTek0/main/check-help" > /usr/bin/buid-help
+
+chmod 777 /usr/bin/build-help
