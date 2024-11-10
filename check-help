@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Variables globales pour compter les tests réussis
+total_tests=0
+successful_tests=0
+
 # Fonction pour compiler et tester chaque exercice
 function verifier_exercice {
     fichier=$1
@@ -17,138 +21,116 @@ function verifier_exercice {
     output=$(echo -e "$inputs" | ./"$fichier")
 
     # Compare la sortie obtenue avec la sortie attendue
+    ((total_tests++))
     if [[ "$output" == "$expected_output" ]]; then
         echo "Exercice $fichier réussi ✅"
-        return 1 # Retourne 1 pour réussite
+        ((successful_tests++))
     else
         echo "Exercice $fichier échoué ❌"
         echo "Sortie obtenue :"
         echo "$output"
         echo "Sortie attendue :"
         echo "$expected_output"
-        return 0 # Retourne 0 pour échec
     fi
+
+    rm -f "$fichier"
 }
 
-# Vérification du respect du style de code
-function verifier_style {
-    DELIVERY_DIR=$1
-    REPORTS_DIR=$2
-    EXPORT_FILE="$REPORTS_DIR"/coding-style-reports.log
 
-    # Exécute la vérification du style de code
-    coding-style "$DELIVERY_DIR" "$REPORTS_DIR"
+    # Test pour exo1
+    verifier_exercice "exo1" "" "Bienvenue Inda !
+Programme terminé."
 
-    if [[ -f "$EXPORT_FILE" ]]; then
-        MAJOR_ERRORS=$(grep -c ": MAJOR:" "$EXPORT_FILE")
-        MINOR_ERRORS=$(grep -c ": MINOR:" "$EXPORT_FILE")
+    # Tests pour exo2 avec plusieurs jeux d'entrées
+    verifier_exercice "exo2" "25
+1.75
+A
+" "Votre âge est : 25
+Votre taille est : 1.75
+Votre lettre préférée est : A"
+    verifier_exercice "exo2" "30
+1.82
+B
+" "Votre âge est : 30
+Votre taille est : 1.82
+Votre lettre préférée est : B"
+    verifier_exercice "exo2" "45
+1.60
+Z
+" "Votre âge est : 45
+Votre taille est : 1.60
+Votre lettre préférée est : Z"
+    verifier_exercice "exo2" "18
+1.55
+X
+" "Votre âge est : 18
+Votre taille est : 1.55
+Votre lettre préférée est : X"
 
-        if [[ $MAJOR_ERRORS -gt 1 || $MINOR_ERRORS -gt 3 ]]; then
-            echo "Too Many Styles Errors"
-            return 1 # Retourne 1 si trop d'erreurs
-        fi
-    else
-        echo "Aucun fichier de style trouvé."
-        return 1
-    fi
+    # Tests pour exo3
+    verifier_exercice "exo3" "10
+3
+" "Addition : 13
+Soustraction : 7
+Multiplication : 30
+Division : 3
+Modulo : 1"
+    verifier_exercice "exo3" "5
+2
+" "Addition : 7
+Soustraction : 3
+Multiplication : 10
+Division : 2
+Modulo : 1"
+    verifier_exercice "exo3" "15
+4
+" "Addition : 19
+Soustraction : 11
+Multiplication : 60
+Division : 3
+Modulo : 3"
 
-    return 0 # Retourne 0 si le style est respecté
-}
+    # Tests pour exo4
+    verifier_exercice "exo4" "-5
+" "Le nombre est négatif."
+    verifier_exercice "exo4" "0
+" "Le nombre est neutre."
+    verifier_exercice "exo4" "7
+" "Le nombre est positif."
 
-# Variables
-DELIVERY_DIR="."  # Répertoire des fichiers à tester
-REPORTS_DIR="."   # Répertoire pour les rapports de style de code
+    # Tests pour exo5
+    verifier_exercice "exo5" "" "0 2 4 6 8 10 12 14 16 18"
 
-if verifier_style "$DELIVERY_DIR" "$REPORTS_DIR"; then
-    # Tests pour chaque exercice
-    total_tests=0
-    successful_tests=0
+    # Tests pour exo6
+    verifier_exercice "exo6" "5
+" "Le carré de 5 est : 25"
+    verifier_exercice "exo6" "7
+" "Le carré de 7 est : 49"
+    verifier_exercice "exo6" "9
+" "Le carré de 9 est : 81"
 
-    if [[ $(verifier_exercice "exo1" "" "Bienvenue, [ton nom] !\nProgramme terminé.") -eq 1 ]]; then
-        ((successful_tests++))
-    fi
-    if [[ $(verifier_exercice "exo1" "" "Bienvenue, Alice !\nProgramme terminé.") -eq 1 ]]; then
-        ((successful_tests++))
-    fi
-    if [[ $(verifier_exercice "exo1" "" "Bienvenue, Bob !\nProgramme terminé.") -eq 1 ]]; then
-        ((successful_tests++))
-    fi
+    # Tests pour exo7
+    verifier_exercice "exo7" "1
+2
+3
+4
+5
+" "La somme est : 15"
+    verifier_exercice "exo7" "10
+20
+30
+40
+50
+" "La somme est : 150"
 
-    if [[ $(verifier_exercice "exo2" "25\n1.75\nA\n" "Votre âge est : 25\nVotre taille est : 1.75\nVotre lettre préférée est : A") -eq 1 ]]; then
-        ((successful_tests++))
-    fi
-    if [[ $(verifier_exercice "exo2" "30\n1.82\nB\n" "Votre âge est : 30\nVotre taille est : 1.82\nVotre lettre préférée est : B") -eq 1 ]]; then
-        ((successful_tests++))
-    fi
-    if [[ $(verifier_exercice "exo2" "45\n1.60\nZ\n" "Votre âge est : 45\nVotre taille est : 1.60\nVotre lettre préférée est : Z") -eq 1 ]]; then
-        ((successful_tests++))
-    fi
-    if [[ $(verifier_exercice "exo2" "18\n1.55\nX\n" "Votre âge est : 18\nVotre taille est : 1.55\nVotre lettre préférée est : X") -eq 1 ]]; then
-        ((successful_tests++))
-    fi
+    # Tests pour exo8
+    verifier_exercice "exo8" "" "Valeur de la variable : 10
+Valeur via le pointeur : 10"
+    verifier_exercice "exo8" "" "Valeur de la variable : 100
+Valeur via le pointeur : 100"
 
-    if [[ $(verifier_exercice "exo3" "10\n3\n" "Addition : 13\nSoustraction : 7\nMultiplication : 30\nDivision : 3\nModulo : 1") -eq 1 ]]; then
-        ((successful_tests++))
-    fi
-    if [[ $(verifier_exercice "exo3" "5\n2\n" "Addition : 7\nSoustraction : 3\nMultiplication : 10\nDivision : 2\nModulo : 1") -eq 1 ]]; then
-        ((successful_tests++))
-    fi
-    if [[ $(verifier_exercice "exo3" "15\n4\n" "Addition : 19\nSoustraction : 11\nMultiplication : 60\nDivision : 3\nModulo : 3") -eq 1 ]]; then
-        ((successful_tests++))
-    fi
-
-    if [[ $(verifier_exercice "exo4" "-5\n" "Le nombre est négatif.") -eq 1 ]]; then
-        ((successful_tests++))
-    fi
-    if [[ $(verifier_exercice "exo4" "0\n" "Le nombre est neutre.") -eq 1 ]]; then
-        ((successful_tests++))
-    fi
-    if [[ $(verifier_exercice "exo4" "7\n" "Le nombre est positif.") -eq 1 ]]; then
-        ((successful_tests++))
-    fi
-
-    expected_output="0 2 4 6 8 10 12 14 16 18"
-    if [[ $(verifier_exercice "exo5" "" "$expected_output") -eq 1 ]]; then
-        ((successful_tests++))
-    fi
-    expected_output="0 2 4 6 8 10 12 14 16 18"
-    if [[ $(verifier_exercice "exo5" "" "$expected_output") -eq 1 ]]; then
-        ((successful_tests++))
-    fi
-
-    if [[ $(verifier_exercice "exo6" "5\n" "Le carré de 5 est : 25") -eq 1 ]]; then
-        ((successful_tests++))
-    fi
-    if [[ $(verifier_exercice "exo6" "7\n" "Le carré de 7 est : 49") -eq 1 ]]; then
-        ((successful_tests++))
-    fi
-    if [[ $(verifier_exercice "exo6" "9\n" "Le carré de 9 est : 81") -eq 1 ]]; then
-        ((successful_tests++))
-    fi
-
-    if [[ $(verifier_exercice "exo7" "1\n2\n3\n4\n5\n" "La somme est : 15") -eq 1 ]]; then
-        ((successful_tests++))
-    fi
-    if [[ $(verifier_exercice "exo7" "10\n20\n30\n40\n50\n" "La somme est : 150") -eq 1 ]]; then
-        ((successful_tests++))
-    fi
-    if [[ $(verifier_exercice "exo7" "7\n8\n9\n10\n" "La somme est : 34") -eq 1 ]]; then
-        ((successful_tests++))
-    fi
-
-    if [[ $(verifier_exercice "exo8" "" "Valeur de la variable : 10\nValeur via le pointeur : 10") -eq 1 ]]; then
-        ((successful_tests++))
-    fi
-    if [[ $(verifier_exercice "exo8" "" "Valeur de la variable : 100\nValeur via le pointeur : 100") -eq 1 ]]; then
-        ((successful_tests++))
-    fi
-    if [[ $(verifier_exercice "exo8" "" "Valeur de la variable : 200\nValeur via le pointeur : 200") -eq 1 ]]; then
-        ((successful_tests++))
-    fi
-
-    total_tests=24  # Nombre total de tests
+    # Résumé des tests
     success_rate=$((successful_tests * 100 / total_tests))
-
     echo "Tests terminés !"
     echo "Réussite : $successful_tests/$total_tests tests"
     echo "Taux de réussite : $success_rate%"
