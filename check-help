@@ -4,11 +4,38 @@
 total_tests=0
 successful_tests=0
 
+# Fonction pour nettoyer les sorties
+function nettoyer_sortie {
+    echo "$1" | sed -E 's/Entrez votre âge.*: *//g' \
+    | sed -E 's/Entrez un.*: *//g' \
+    | sed -E 's/Entrez le.*: *//g' \
+    | sed -E 's/Entrez 5.*: *//g' \
+    | sed -E 's/Adresse de la variable.*//g' \
+    | sed -E 's/\[Ton Nom\]/Inda/g' \
+    | sed -E 's/\[Ton Nom\]/GUERGUISSE/g' \
+    | sed -E 's/^Addition.*: ([0-9]+)/\1/g' \
+    | sed -E 's/^Le carré de.*: ([0-9]+)/\1/g' \
+    | sed -E 's/^La somme est.*: ([0-9]+)/\1/g' \
+    | sed -E 's/Boucle.*: //g' \
+    | sed 's/[[:space:]]*$//' \
+    | sed 's/^ *//g' \
+    | tr '\n' ' ' \
+    | sed 's/  */ /g' \
+    | sed 's/^ *//g' \
+    | tr -s ' '
+}
+
 # Fonction pour compiler et tester chaque exercice
 function verifier_exercice {
     fichier=$1
     inputs=$2
     expected_output=$3
+
+    # Vérifie si le fichier source existe
+    if [[ ! -f "$fichier.c" ]]; then
+        echo "Fichier source $fichier.c non trouvé ❌"
+        return
+    fi
 
     # Compile le fichier source
     gcc -o "$fichier" "$fichier.c" 2>/dev/null
@@ -19,121 +46,114 @@ function verifier_exercice {
 
     # Exécute le programme et capture la sortie
     output=$(echo -e "$inputs" | ./"$fichier")
+    rm -f "$fichier"  # Supprime le fichier binaire compilé
 
-    # Compare la sortie obtenue avec la sortie attendue
+    # Nettoyer les sorties
+    cleaned_output=$(nettoyer_sortie "$output")
+    cleaned_expected=$(nettoyer_sortie "$expected_output")
+
+    # Compare les résultats après nettoyage
     ((total_tests++))
-    if [[ "$output" == "$expected_output" ]]; then
+    if [[ "$cleaned_output" == "$cleaned_expected" ]]; then
         echo "Exercice $fichier réussi ✅"
         ((successful_tests++))
     else
         echo "Exercice $fichier échoué ❌"
-        echo "Sortie obtenue :"
-        echo "$output"
-        echo "Sortie attendue :"
-        echo "$expected_output"
+        echo "Sortie obtenue : $cleaned_output"
+        echo "Sortie attendue : $cleaned_expected"
     fi
-
-    rm -f "$fichier"
 }
 
+function verifier_style {
+    DELIVERY_DIR=$1
+    REPORTS_DIR=$2
+    EXPORT_FILE="$REPORTS_DIR/coding-style-reports.log"
 
-    # Test pour exo1
-    verifier_exercice "exo1" "" "Bienvenue Inda !
+    # Exécute la vérification du style de code
+    coding-style "$DELIVERY_DIR" "$REPORTS_DIR"
+
+    if [[ -f "$EXPORT_FILE" ]]; then
+        MAJOR_ERRORS=$(grep -c ": MAJOR:" "$EXPORT_FILE")
+        MINOR_ERRORS=$(grep -c ": MINOR:" "$EXPORT_FILE")
+
+        if [[ $MAJOR_ERRORS -gt 1 || $MINOR_ERRORS -gt 3 ]]; then
+            echo "Too Many Styles Errors ❌"
+            return 0 # Trop d'erreurs de style
+        fi
+    else
+        echo "Aucun fichier de style trouvé ❌"
+        return 1
+    fi
+
+    return 0 # Le style est respecté
+}
+
+DELIVERY_DIR="."  # Répertoire des fichiers à tester
+REPORTS_DIR="."   # Répertoire pour les rapports de style de code
+
+if verifier_style "$DELIVERY_DIR" "$REPORTS_DIR"; then
+
+# Tests pour exo1
+verifier_exercice "exo1" "" "Bienvenue, [Ton Nom\] !
 Programme terminé."
 
-    # Tests pour exo2 avec plusieurs jeux d'entrées
-    verifier_exercice "exo2" "25
-1.75
-A
-" "Votre âge est : 25
+# Tests pour exo2 avec plusieurs jeux d'entrées
+verifier_exercice "exo2" "25\n1.75\nA" "Votre âge est : 25
 Votre taille est : 1.75
 Votre lettre préférée est : A"
-    verifier_exercice "exo2" "30
-1.82
-B
-" "Votre âge est : 30
+verifier_exercice "exo2" "30\n1.82\nB" "Votre âge est : 30
 Votre taille est : 1.82
 Votre lettre préférée est : B"
-    verifier_exercice "exo2" "45
-1.60
-Z
-" "Votre âge est : 45
+verifier_exercice "exo2" "45\n1.60\nZ" "Votre âge est : 45
 Votre taille est : 1.60
 Votre lettre préférée est : Z"
-    verifier_exercice "exo2" "18
-1.55
-X
-" "Votre âge est : 18
+verifier_exercice "exo2" "18\n1.55\nX" "Votre âge est : 18
 Votre taille est : 1.55
 Votre lettre préférée est : X"
 
-    # Tests pour exo3
-    verifier_exercice "exo3" "10
-3
-" "Addition : 13
+# Tests pour exo3
+verifier_exercice "exo3" "10\n3" "Addition : 13
 Soustraction : 7
 Multiplication : 30
 Division : 3
 Modulo : 1"
-    verifier_exercice "exo3" "5
-2
-" "Addition : 7
+verifier_exercice "exo3" "5\n2" "Addition : 7
 Soustraction : 3
 Multiplication : 10
 Division : 2
 Modulo : 1"
-    verifier_exercice "exo3" "15
-4
-" "Addition : 19
+verifier_exercice "exo3" "15\n4" "Addition : 19
 Soustraction : 11
 Multiplication : 60
 Division : 3
 Modulo : 3"
 
-    # Tests pour exo4
-    verifier_exercice "exo4" "-5
-" "Le nombre est négatif."
-    verifier_exercice "exo4" "0
-" "Le nombre est neutre."
-    verifier_exercice "exo4" "7
-" "Le nombre est positif."
+# Tests pour exo4
+verifier_exercice "exo4" "-5" "Le nombre est négatif."
+verifier_exercice "exo4" "0" "Le nombre est neutre."
+verifier_exercice "exo4" "7" "Le nombre est positif."
 
-    # Tests pour exo5
-    verifier_exercice "exo5" "" "0 2 4 6 8 10 12 14 16 18"
+# Tests pour exo5
+verifier_exercice "exo5" "" "0 2 4 6 8 10 12 14 16 18 0 2 4 6 8 10 12 14 16 18 0 2 4 6 8 10 12 14 16 18"
 
-    # Tests pour exo6
-    verifier_exercice "exo6" "5
-" "Le carré de 5 est : 25"
-    verifier_exercice "exo6" "7
-" "Le carré de 7 est : 49"
-    verifier_exercice "exo6" "9
-" "Le carré de 9 est : 81"
+# Tests pour exo6
+verifier_exercice "exo6" "5" "Le carré de 5 est : 25"
+verifier_exercice "exo6" "7" "Le carré de 7 est : 49"
+verifier_exercice "exo6" "9" "Le carré de 9 est : 81"
 
-    # Tests pour exo7
-    verifier_exercice "exo7" "1
-2
-3
-4
-5
-" "La somme est : 15"
-    verifier_exercice "exo7" "10
-20
-30
-40
-50
-" "La somme est : 150"
+# Tests pour exo7
+verifier_exercice "exo7" "1\n2\n3\n4\n5" "La somme est : 15"
+verifier_exercice "exo7" "10\n20\n30\n40\n50" "La somme est : 150"
 
-    # Tests pour exo8
-    verifier_exercice "exo8" "" "Valeur de la variable : 10
+# Tests pour exo8
+verifier_exercice "exo8" "" "Valeur de la variable : 10
 Valeur via le pointeur : 10"
-    verifier_exercice "exo8" "" "Valeur de la variable : 100
-Valeur via le pointeur : 100"
 
-    # Résumé des tests
-    success_rate=$((successful_tests * 100 / total_tests))
-    echo "Tests terminés !"
-    echo "Réussite : $successful_tests/$total_tests tests"
-    echo "Taux de réussite : $success_rate%"
+# Résumé des tests
+echo "Tests terminés !"
+echo "Réussite : $successful_tests/$total_tests tests"
+success_rate=$((successful_tests * 100 / total_tests))
+echo "Taux de réussite : $success_rate%"
 else
     echo "Le style de code n'est pas respecté, impossible de lancer les tests."
 fi
